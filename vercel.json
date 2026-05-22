@@ -3,10 +3,7 @@
   "builds": [
     {
       "src": "frontend/package.json",
-      "use": "@vercel/next",
-      "config": {
-        "distDir": ".next"
-      }
+      "use": "@vercel/next"
     },
     {
       "src": "backend/src/server.ts",
@@ -18,7 +15,11 @@
   ],
   "routes": [
     {
-      "src": "/_/backend/(.*)",
+      "src": "/api/(.*)",
+      "dest": "/backend/src/server.ts"
+    },
+    {
+      "src": "/socket.io/(.*)",
       "dest": "/backend/src/server.ts"
     },
     {
@@ -32,50 +33,6 @@
   "functions": {
     "backend/src/server.ts": {
       "maxDuration": 30
-    }
-  },
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/_/backend/api/$1"
-    },
-    {
-      "source": "/socket.io/(.*)",
-      "destination": "/_/backend/socket.io/$1"
-    }
-  ],
-  "headers": [
-    {
-      "source": "/_/backend/(.*)",
-      "headers": [
-        {
-          "key": "Access-Control-Allow-Origin",
-          "value": "*"
-        },
-        {
-          "key": "Access-Control-Allow-Methods",
-          "value": "GET, POST, PUT, DELETE, OPTIONS"
-        },
-        {
-          "key": "Access-Control-Allow-Headers",
-          "value": "Content-Type, Authorization"
-        }
-      ]
-    }
-  ],
-  "installCommand": "npm install --prefix frontend && npm install --prefix backend",
-  "buildCommand": "npm run build --prefix frontend && npm run build --prefix backend",
-  "outputDirectory": "frontend/.next",
-  "framework": "nextjs",
-  "experimentalServices": {
-    "frontend": {
-      "root": "frontend",
-      "routePrefix": "/",
-      "framework": "nextjs"
-    },
-    "backend": {
-      "root": "backend",
-      "routePrefix": "/_/backend"
     }
   }
 }

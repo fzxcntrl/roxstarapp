@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum WheelStatus {
+  WAITING
+  ACTIVE
+  SPINNING
+  COMPLETED
+  ABORTED
+}
+
+enum TransactionType {
+  ENTRY_FEE
+  WINNER_PAYOUT
+  ADMIN_PAYOUT
+  REFUND
+}
+
+model User {
+  id               String        @id @default(uuid())
+  username         String        @unique
+  email            String        @unique
+  passwordHash     String
+  role             Role          @default(USER)
+  coinBalance      Float         @default(0)
+  totalWins        Int           @default(0)
+  totalGamesPlayed Int           @default(0)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  participants     Participant[]
+  transactions     Transaction[]
+}
+
+model SpinWheel {
+  id                      String        @id @default(uuid())
+  status                  WheelStatus   @default(WAITING)
+  entryFee                Float
+  eliminationSequence     Json?         // Array of Participant IDs
+  currentEliminationIndex Int           @default(0)
+  winnerUserId            String?
+  adminUserId             String?
+  winnerPool              Float         @default(0)
+  adminPool               Float         @default(0)
+  appPool                 Float         @default(0)
+  startTime               DateTime?
+  autoStartAt             DateTime?
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+
+  participants            Participant[]
+  transactions            Transaction[]
+}
+
+model Participant {
+  id           String    @id @default(uuid())
+  userId       String
+  spinWheelId  String
+  joinedAt     DateTime  @default(now())
+  isEliminated Boolean   @default(false)
+  eliminatedAt DateTime?
+
+  user         User      @relation(fields: [userId], references: [id])
+  spinWheel    SpinWheel @relation(fields: [spinWheelId], references: [id])
+
+  @@unique([userId, spinWheelId])
+}
+
+model Transaction {
+  id            String          @id @default(uuid())
+  userId        String
+  spinWheelId   String?
+  type          TransactionType
+  amount        Float
+  balanceBefore Float
+  balanceAfter  Float
+  createdAt     DateTime        @default(now())
+
+  user          User            @relation(fields: [userId], references: [id])
+  spinWheel     SpinWheel?      @relation(fields: [spinWheelId], references: [id])
+}
+
+model Config {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

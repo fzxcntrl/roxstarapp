@@ -12,6 +12,11 @@
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
+    "@types/bcryptjs": "^2.4.x",
+    "@types/cors": "^2.8.x",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.x",
+    "@types/node": "^25.9.1",
     "bcryptjs": "^3.0.3",
     "bullmq": "^5.x",
     "cors": "^2.8.5",
@@ -20,18 +25,13 @@
     "ioredis": "^5.x",
     "jsonwebtoken": "^9.0.x",
     "socket.io": "^4.7.x",
+    "typescript": "^6.0.3",
     "winston": "^3.13.x",
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@types/bcryptjs": "^2.4.x",
-    "@types/cors": "^2.8.x",
-    "@types/express": "^5.0.6",
-    "@types/jsonwebtoken": "^9.0.x",
-    "@types/node": "^25.9.1",
     "nodemon": "^3.1.x",
     "prisma": "^6.19.3",
-    "ts-node": "^10.9.x",
-    "typescript": "^6.0.3"
+    "ts-node": "^10.9.x"
   }
 }

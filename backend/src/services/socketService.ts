@@ -9,8 +9,9 @@ class SocketService {
   public init(server: HttpServer) {
     this.io = new SocketIOServer(server, {
       cors: {
-        origin: env.FRONTEND_URL,
-        methods: ['GET', 'POST']
+        origin: [env.FRONTEND_URL],
+        methods: ['GET', 'POST'],
+        credentials: true
       }
     });
 

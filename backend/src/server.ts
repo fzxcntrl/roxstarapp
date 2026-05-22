@@ -12,7 +12,10 @@ const app = express();
 const httpServer = createServer(app);
 
 // Middleware
-app.use(cors({ origin: env.FRONTEND_URL }));
+app.use(cors({ 
+  origin: [env.FRONTEND_URL],
+  credentials: true 
+}));
 app.use(express.json());
 
 // Routes

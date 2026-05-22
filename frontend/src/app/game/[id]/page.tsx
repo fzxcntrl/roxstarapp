@@ -30,7 +30,8 @@ export default function GameRoom() {
     // Initial fetch of wheel state
     const fetchWheel = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/wheel/active`);
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+        const res = await fetch(`${apiUrl}/wheel/active`);
         const data = await res.json();
         const wheel = data.find((w: any) => w.id === wheelId);
         if (wheel) {
@@ -54,7 +55,8 @@ export default function GameRoom() {
 
   const forceStart = async () => {
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/wheel/${wheelId}/start`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+      await fetch(`${apiUrl}/wheel/${wheelId}/start`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });

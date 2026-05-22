@@ -10,7 +10,8 @@ export const useSocket = (wheelId?: string) => {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:4000', {
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || window.location.origin;
+    const socket = io(socketUrl, {
       auth: { token }
     });
 

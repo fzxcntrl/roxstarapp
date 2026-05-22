@@ -16,7 +16,8 @@ export default function Home() {
 
   const fetchWheels = async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/wheel/active`);
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+      const res = await fetch(`${apiUrl}/wheel/active`);
       const data = await res.json();
       setWheels(data);
     } catch (err) {
@@ -41,7 +42,8 @@ export default function Home() {
     const endpoint = isLogin ? '/auth/login' : '/auth/register';
     const body = isLogin ? { email, password } : { email, password, username };
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api${endpoint}`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+      const res = await fetch(`${apiUrl}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
@@ -63,7 +65,8 @@ export default function Home() {
       return;
     }
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/wheel`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+      const res = await fetch(`${apiUrl}/wheel`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -88,7 +91,8 @@ export default function Home() {
       return;
     }
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/wheel/${wheelId}/join`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+      const res = await fetch(`${apiUrl}/wheel/${wheelId}/join`, {
         method: 'POST',
         headers: { 
           'Authorization': `Bearer ${token}`

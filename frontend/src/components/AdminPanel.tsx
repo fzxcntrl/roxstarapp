@@ -39,11 +39,12 @@ export function AdminPanel() {
 
   const fetchConfigurations = async () => {
     try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
       const [coinRes, gameRes] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/config/coin-distribution`, {
+        fetch(`${apiUrl}/config/coin-distribution`, {
           headers: { 'Authorization': `Bearer ${token}` }
         }),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/config/game`, {
+        fetch(`${apiUrl}/config/game`, {
           headers: { 'Authorization': `Bearer ${token}` }
         })
       ]);
@@ -65,7 +66,8 @@ export function AdminPanel() {
   const updateCoinDistribution = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/config/coin-distribution`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+      const res = await fetch(`${apiUrl}/config/coin-distribution`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -90,7 +92,8 @@ export function AdminPanel() {
   const updateGameConfig = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/config/game`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+      const res = await fetch(`${apiUrl}/config/game`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

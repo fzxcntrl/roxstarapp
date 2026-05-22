@@ -24,7 +24,14 @@ app.use(errorHandler);
 // Initialize Socket.io
 socketService.init(httpServer);
 
-// Start server
-httpServer.listen(env.PORT, () => {
-  logger.info(`Server is running on port ${env.PORT}`);
-});
+// For Vercel serverless deployment
+if (process.env.VERCEL) {
+  module.exports = app;
+} else {
+  // Start server for local development
+  httpServer.listen(env.PORT, () => {
+    logger.info(`Server is running on port ${env.PORT}`);
+  });
+}
+
+export default app;

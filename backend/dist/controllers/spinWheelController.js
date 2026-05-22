@@ -15,10 +15,10 @@ const createWheel = async (req, res) => {
     try {
         const { entryFee } = createWheelSchema.parse(req.body);
         const existingWaiting = await prisma.spinWheel.findFirst({
-            where: { status: client_1.WheelStatus.WAITING }
+            where: { status: { in: [client_1.WheelStatus.WAITING, client_1.WheelStatus.SPINNING] } }
         });
         if (existingWaiting) {
-            res.status(400).json({ error: 'A wheel is already waiting' });
+            res.status(400).json({ error: 'An active wheel already exists' });
             return;
         }
         const autoStartAt = new Date(Date.now() + 3 * 60 * 1000); // 3 mins

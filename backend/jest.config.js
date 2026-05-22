@@ -3,4 +3,14 @@ module.exports = {
   testEnvironment: 'node',
   testMatch: ['**/__tests__/**/*.spec.ts'],
   clearMocks: true,
+  transform: {
+    '^.+\\.tsx?$': [
+      'ts-jest',
+      {
+        tsconfig: {
+          types: ['node', 'jest']
+        }
+      }
+    ]
+  }
 };

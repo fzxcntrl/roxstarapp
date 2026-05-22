@@ -9,8 +9,9 @@ class SocketService {
     init(server) {
         this.io = new socket_io_1.Server(server, {
             cors: {
-                origin: env_1.env.FRONTEND_URL,
-                methods: ['GET', 'POST']
+                origin: [env_1.env.FRONTEND_URL],
+                methods: ['GET', 'POST'],
+                credentials: true
             }
         });
         this.io.on('connection', (socket) => {

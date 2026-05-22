@@ -108,6 +108,26 @@ export default function Home() {
       console.error(err);
     }
   };
+  const handleAbortWheel = async (wheelId: string) => {
+    if (!token) return;
+    if (!confirm('Are you sure you want to stop this game? All active players will be refunded.')) return;
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+      const res = await fetch(`${apiUrl}/wheel/${wheelId}/abort`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        fetchWheels();
+        alert('Game stopped successfully.');
+      } else {
+        alert(data.error);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   return (
     <main className="container mx-auto p-8">
@@ -179,7 +199,7 @@ export default function Home() {
                   <p className="text-sm text-gray-400">Players Joined</p>
                   <p className="font-orbitron text-xl">{wheel.participants?.length || 0} / Unlimited</p>
                 </div>
-                <div className="mt-auto pt-4">
+                <div className="mt-auto pt-4 flex flex-col gap-2">
                   {wheel.status === 'WAITING' ? (
                     <button 
                       onClick={() => handleJoinWheel(wheel.id)}
@@ -193,6 +213,14 @@ export default function Home() {
                       className="w-full bg-gray-700 text-white font-bold py-3 rounded-xl uppercase hover:bg-gray-600 transition-colors"
                     >
                       Watch Game
+                    </button>
+                  )}
+                  {user.role === 'ADMIN' && (
+                    <button 
+                      onClick={() => handleAbortWheel(wheel.id)}
+                      className="w-full border border-red-600 text-red-500 font-bold py-2 rounded-xl uppercase hover:bg-red-900 transition-colors text-sm"
+                    >
+                      Stop Game
                     </button>
                   )}
                 </div>

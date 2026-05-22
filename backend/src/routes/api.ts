@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { register, login, getProfile } from '../controllers/authController';
-import { createWheel, joinWheel, getActiveWheels, forceStartWheel } from '../controllers/spinWheelController';
+import { createWheel, joinWheel, getActiveWheels, forceStartWheel, abortWheel } from '../controllers/spinWheelController';
 import { 
   getConfig, 
   updateConfig, 
@@ -24,6 +24,7 @@ router.post('/wheel', authenticate, requireAdmin, createWheel);
 router.get('/wheel/active', getActiveWheels);
 router.post('/wheel/:id/join', authenticate, joinWheel);
 router.post('/wheel/:id/start', authenticate, requireAdmin, forceStartWheel);
+router.post('/wheel/:id/abort', authenticate, requireAdmin, abortWheel);
 
 // Configuration routes (Admin only)
 router.get('/config/coin-distribution', authenticate, requireAdmin, getCoinDistribution);

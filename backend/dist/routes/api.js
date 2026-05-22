@@ -15,6 +15,7 @@ router.post('/wheel', auth_1.authenticate, auth_1.requireAdmin, spinWheelControl
 router.get('/wheel/active', spinWheelController_1.getActiveWheels);
 router.post('/wheel/:id/join', auth_1.authenticate, spinWheelController_1.joinWheel);
 router.post('/wheel/:id/start', auth_1.authenticate, auth_1.requireAdmin, spinWheelController_1.forceStartWheel);
+router.post('/wheel/:id/abort', auth_1.authenticate, auth_1.requireAdmin, spinWheelController_1.abortWheel);
 // Configuration routes (Admin only)
 router.get('/config/coin-distribution', auth_1.authenticate, auth_1.requireAdmin, configController_1.getCoinDistribution);
 router.put('/config/coin-distribution', auth_1.authenticate, auth_1.requireAdmin, configController_1.updateCoinDistribution);

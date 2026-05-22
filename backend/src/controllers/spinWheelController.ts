@@ -55,11 +55,6 @@ export const createWheel = async (req: AuthRequest, res: Response): Promise<void
   }
 };
 
-export const joinWheel = async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    const wheelId = req.params.id as string;
-    const userId = req.user!.id;
-
 async function performJoin(userId: string, wheelId: string) {
   const gameConfig = await ConfigService.getGameConfig();
 

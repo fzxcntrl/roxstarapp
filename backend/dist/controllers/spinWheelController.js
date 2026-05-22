@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.forceStartWheel = exports.getActiveWheels = exports.joinWheel = exports.createWheel = void 0;
+exports.abortWheel = exports.forceStartWheel = exports.getActiveWheels = exports.joinWheel = exports.createWheel = void 0;
 const client_1 = require("@prisma/client");
 const zod_1 = require("zod");
 const gameEngine_1 = require("../services/gameEngine");
@@ -30,6 +30,17 @@ const createWheel = async (req, res) => {
             }
         });
         await gameEngine_1.gameEngine.scheduleAutoStartCheck(wheel.id);
+        // Auto-join default players
+        const defaultEmails = ['player1@roxstar.com', 'player2@roxstar.com', 'player3@roxstar.com', 'player4@roxstar.com', 'player5@roxstar.com'];
+        const defaultUsers = await prisma.user.findMany({ where: { email: { in: defaultEmails } } });
+        for (const u of defaultUsers) {
+            try {
+                await performJoin(u.id, wheel.id);
+            }
+            catch (e) {
+                console.error('Failed to auto-join default user:', e);
+            }
+        }
         res.json(wheel);
     }
     catch (err) {
@@ -37,58 +48,52 @@ const createWheel = async (req, res) => {
     }
 };
 exports.createWheel = createWheel;
+async function performJoin(userId, wheelId) {
+    const gameConfig = await configService_1.ConfigService.getGameConfig();
+    const result = await prisma.$transaction(async (tx) => {
+        const wheel = await tx.spinWheel.findUnique({
+            where: { id: wheelId },
+            include: { participants: true }
+        });
+        if (!wheel || wheel.status !== client_1.WheelStatus.WAITING) {
+            throw new Error('Wheel is not available to join');
+        }
+        if (wheel.participants.length >= gameConfig.maxParticipants) {
+            throw new Error(`Maximum ${gameConfig.maxParticipants} participants allowed`);
+        }
+        const alreadyJoined = wheel.participants.some((p) => p.userId === userId);
+        if (alreadyJoined) {
+            throw new Error('Already joined');
+        }
+        const newBalance = await coinService_1.CoinService.deductEntryFee(userId, wheelId, wheel.entryFee);
+        const participant = await tx.participant.create({
+            data: { userId, spinWheelId: wheelId },
+            include: { user: { select: { username: true } } }
+        });
+        const coinDistribution = await configService_1.ConfigService.getCoinDistribution();
+        const totalFee = wheel.entryFee;
+        const winnerCut = totalFee * coinDistribution.winnerPercentage;
+        const adminCut = totalFee * coinDistribution.adminPercentage;
+        const appCut = totalFee * coinDistribution.appPercentage;
+        await tx.spinWheel.update({
+            where: { id: wheelId },
+            data: {
+                winnerPool: { increment: winnerCut },
+                adminPool: { increment: adminCut },
+                appPool: { increment: appCut },
+            }
+        });
+        return { participant, newBalance };
+    });
+    socketService_1.socketService.emitCoinUpdate(userId, { newBalance: result.newBalance });
+    socketService_1.socketService.emitPlayerJoined(wheelId, result.participant);
+    return result;
+}
 const joinWheel = async (req, res) => {
     try {
         const wheelId = req.params.id;
         const userId = req.user.id;
-        // Get game configuration
-        const gameConfig = await configService_1.ConfigService.getGameConfig();
-        // Use a transaction to safely check and add participant
-        const result = await prisma.$transaction(async (tx) => {
-            const wheel = await tx.spinWheel.findUnique({
-                where: { id: wheelId },
-                include: { participants: true }
-            });
-            if (!wheel || wheel.status !== client_1.WheelStatus.WAITING) {
-                throw new Error('Wheel is not available to join');
-            }
-            // Check maximum participants limit
-            if (wheel.participants.length >= gameConfig.maxParticipants) {
-                throw new Error(`Maximum ${gameConfig.maxParticipants} participants allowed`);
-            }
-            const alreadyJoined = wheel.participants.some((p) => p.userId === userId);
-            if (alreadyJoined) {
-                throw new Error('Already joined');
-            }
-            // Deduct fee atomically
-            const newBalance = await coinService_1.CoinService.deductEntryFee(userId, wheelId, wheel.entryFee);
-            // Create participant
-            const participant = await tx.participant.create({
-                data: {
-                    userId,
-                    spinWheelId: wheelId
-                },
-                include: { user: { select: { username: true } } }
-            });
-            // Get coin distribution configuration
-            const coinDistribution = await configService_1.ConfigService.getCoinDistribution();
-            // Update pools based on database configuration
-            const totalFee = wheel.entryFee;
-            const winnerCut = totalFee * coinDistribution.winnerPercentage;
-            const adminCut = totalFee * coinDistribution.adminPercentage;
-            const appCut = totalFee * coinDistribution.appPercentage;
-            await tx.spinWheel.update({
-                where: { id: wheelId },
-                data: {
-                    winnerPool: { increment: winnerCut },
-                    adminPool: { increment: adminCut },
-                    appPool: { increment: appCut },
-                }
-            });
-            return { participant, newBalance };
-        });
-        socketService_1.socketService.emitCoinUpdate(userId, { newBalance: result.newBalance });
-        socketService_1.socketService.emitPlayerJoined(wheelId, result.participant);
+        const result = await performJoin(userId, wheelId);
         res.json(result);
     }
     catch (err) {
@@ -115,3 +120,34 @@ const forceStartWheel = async (req, res) => {
     }
 };
 exports.forceStartWheel = forceStartWheel;
+const abortWheel = async (req, res) => {
+    try {
+        const wheelId = req.params.id;
+        const wheel = await prisma.spinWheel.findUnique({
+            where: { id: wheelId },
+            include: { participants: true }
+        });
+        if (!wheel || (wheel.status !== client_1.WheelStatus.WAITING && wheel.status !== client_1.WheelStatus.SPINNING)) {
+            res.status(400).json({ error: 'Wheel cannot be aborted' });
+            return;
+        }
+        await prisma.spinWheel.update({
+            where: { id: wheelId },
+            data: { status: client_1.WheelStatus.ABORTED }
+        });
+        for (const p of wheel.participants) {
+            if (!p.isEliminated) {
+                const newBalance = await coinService_1.CoinService.refund(p.userId, wheelId, wheel.entryFee);
+                if (newBalance !== undefined) {
+                    socketService_1.socketService.emitCoinUpdate(p.userId, { newBalance });
+                }
+            }
+        }
+        socketService_1.socketService.emitAborted(wheelId);
+        res.json({ message: 'Wheel aborted and active players refunded' });
+    }
+    catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+};
+exports.abortWheel = abortWheel;

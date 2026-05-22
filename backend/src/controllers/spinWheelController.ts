@@ -18,11 +18,11 @@ export const createWheel = async (req: AuthRequest, res: Response): Promise<void
     const { entryFee } = createWheelSchema.parse(req.body);
 
     const existingWaiting = await prisma.spinWheel.findFirst({
-      where: { status: WheelStatus.WAITING }
+      where: { status: { in: [WheelStatus.WAITING, WheelStatus.SPINNING] } }
     });
 
     if (existingWaiting) {
-      res.status(400).json({ error: 'A wheel is already waiting' });
+      res.status(400).json({ error: 'An active wheel already exists' });
       return;
     }
 
